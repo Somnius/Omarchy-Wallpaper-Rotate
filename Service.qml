@@ -377,6 +377,18 @@ Item {
     onExited: function(exitCode) { root.onSetExited(exitCode) }
   }
 
+  // Open the folder containing the current wallpaper. Lives here because the
+  // Ui Panel component scope refuses to instantiate Quickshell.Io Process.
+  function openCurrentFolder() {
+    var path = String(root.currentWallpaper || "")
+    var dir = path.slice(0, Math.max(path.lastIndexOf("/"), 0))
+    if (dir === "") dir = expandPath(root.directory)
+    folderProc.command = ["xdg-open", dir]
+    folderProc.running = true
+  }
+
+  Process { id: folderProc }
+
   Timer {
     id: scheduleTimer
     interval: 30000

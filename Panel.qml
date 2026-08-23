@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
@@ -40,15 +39,8 @@ Panel {
   function toggle() { opened ? close() : open() }
 
   function openFolder() {
-    if (!service || !service.currentWallpaper) return
-    var path = String(service.currentWallpaper)
-    var dir = path.slice(0, Math.max(path.lastIndexOf("/"), 0))
-    if (dir === "") dir = service.expandPath(service.directory)
-    folderProc.command = ["xdg-open", dir]
-    folderProc.running = true
+    if (service) service.openCurrentFolder()
   }
-
-  Process { id: folderProc }
 
   KeyboardPanel {
     id: panel

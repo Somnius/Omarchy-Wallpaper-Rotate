@@ -44,6 +44,12 @@ ln -s "$PWD/omarchy-wallpaper-rotate" ~/.config/omarchy/plugins/lef.wallpaper-ro
 omarchy-shell shell rescanPlugins
 ```
 
+> **Dev loop caveat:** Quickshell's file watcher does not follow the symlink,
+> so edits made in the clone do **not** hot-reload. After changing files run
+> `omarchy restart shell` (or `omarchy-shell shell rescanPlugins`, then a shell
+> restart if visuals are stale). Plugins cloned directly into
+> `~/.config/omarchy/plugins/` hot-reload normally.
+
 Validate at any time with:
 
 ```sh
