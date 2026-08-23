@@ -4,7 +4,8 @@
 #
 # Usage: Catalog.sh [directory]
 # Defaults to ~/Pictures/wallpapers when no directory is given.
-# The scan is recursive; only formats Omarchy's background engine supports are
+# The scan is limited to 200 files max to prevent exhausting
+# the long-lived shell. Only formats Omarchy's background engine supports are
 # listed (jpg, jpeg, png, gif, bmp, webp) — videos and other files are skipped.
 #
 # Thumbnails reuse Omarchy's existing image-selector cache
@@ -38,12 +39,19 @@ thumbnail_for() {
   fi
 }
 
+max_files=200
+found=0
+
 while IFS= read -r -d '' path; do
+  if [[ $found -ge $max_files ]]; then
+    break
+  fi
   full=$(realpath -m "$path")
   thumb=$(thumbnail_for "$full")
   printf '%s\t%s\n' "$full" "${thumb:-$full}"
+  found=$((found + 1))
 done < <(
   find -L "$dir" -type f \( \
     -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \
     -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) -print0 2>/dev/null
-) | sort -u
+) | sort -u | head -n $max_files

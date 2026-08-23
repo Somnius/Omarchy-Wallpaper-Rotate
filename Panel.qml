@@ -91,7 +91,7 @@ Panel {
         Text {
           Layout.fillWidth: true
           text: root.service && root.service.currentWallpaper !== ""
-            ? root.service.wallpaperName(root.service.currentWallpaper) : "None yet"
+            ? Qt.escape(root.service.wallpaperName(root.service.currentWallpaper)) : "None yet"
           textFormat: Text.PlainText
           color: root.foreground
           font.family: root.fontFamily

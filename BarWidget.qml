@@ -64,7 +64,7 @@ BarWidget {
         root.toggle()
       }
     }
-    onEntered: if (root.bar) root.bar.showTooltip(root, root.displayName || "Wallpaper Rotate")
+    onEntered: if (root.bar) root.bar.showTooltip(root, Qt.escape(root.displayName || "Wallpaper Rotate"))
     onExited: if (root.bar) root.bar.hideTooltip(root)
   }
 

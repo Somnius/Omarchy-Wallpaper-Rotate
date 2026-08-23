@@ -70,7 +70,7 @@ Item {
     var epoch = Number(c.lastChangeEpoch)
     out.lastChangeEpoch = isFinite(epoch) && epoch > 0 ? epoch : 0
     out.position = Math.max(0, Math.round(Number(c.position)) || 0)
-    out.cycle = Array.isArray(c.cycle) ? c.cycle.filter(function (p) { return typeof p === "string" }) : []
+    out.cycle = Array.isArray(c.cycle) ? c.cycle.filter(function (p) { return typeof p === "string" }).slice(0, 50) : []
     out.cycleIndex = Math.max(0, Math.round(Number(c.cycleIndex)) || 0)
     out.cycleDir = typeof c.cycleDir === "string" ? c.cycleDir : ""
     return out
