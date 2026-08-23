@@ -67,8 +67,8 @@ Item {
     out.mode = ["sequential", "random", "shuffle"].indexOf(c.mode) >= 0 ? c.mode : "random"
     out.directory = typeof c.directory === "string" && c.directory.trim() !== ""
       ? c.directory.trim() : "~/Pictures/wallpapers"
-    var epoch = Number(c.lastChangeEpoch)
-    out.lastChangeEpoch = isFinite(epoch) && epoch > 0 ? epoch : 0
+out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c.lastChangeEpoch < 1e15)
+    ? c.lastChangeEpoch : 0
     out.position = Math.max(0, Math.round(Number(c.position)) || 0)
     out.cycle = Array.isArray(c.cycle) ? c.cycle.filter(function (p) { return typeof p === "string" }).slice(0, 50) : []
     out.cycleIndex = Math.max(0, Math.round(Number(c.cycleIndex)) || 0)

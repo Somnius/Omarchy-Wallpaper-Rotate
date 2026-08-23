@@ -4,9 +4,10 @@
 #
 # Usage: Catalog.sh [directory]
 # Defaults to ~/Pictures/wallpapers when no directory is given.
-# The scan is limited to 200 files max to prevent exhausting
-# the long-lived shell. Only formats Omarchy's background engine supports are
-# listed (jpg, jpeg, png, gif, bmp, webp) — videos and other files are skipped.
+# The scan is limited to 200 files max and follows no directory symlinks
+# to prevent exhausting the long-lived shell. Only formats Omarchy's
+# background engine supports are listed (jpg, jpeg, png, gif, bmp, webp)
+# — videos and other files are skipped.
 #
 # Thumbnails reuse Omarchy's existing image-selector cache
 # (~/.cache/omarchy/image-selector/<hash>.jpg), keyed like the built-in picker,
@@ -42,16 +43,22 @@ thumbnail_for() {
 max_files=200
 found=0
 
+# Note: we intentionally do NOT use -L with find to avoid unbounded symlink
+# expansion. Only regular files in the given directory tree are listed.
 while IFS= read -r -d '' path; do
   if [[ $found -ge $max_files ]]; then
     break
   fi
+  # Reject any path that escapes the intended directory tree.
+  # Resolve without following symlinks; skip anything outside $dir.
+  real=$(realpath -m "$path" 2>/dev/null)
+  [[ "$real" == "$dir/"* ]] || continue
   full=$(realpath -m "$path")
   thumb=$(thumbnail_for "$full")
   printf '%s\t%s\n' "$full" "${thumb:-$full}"
   found=$((found + 1))
 done < <(
-  find -L "$dir" -type f \( \
+  find "$dir" -type f \( \
     -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \
     -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) -print0 2>/dev/null
 ) | sort -u | head -n $max_files
