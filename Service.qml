@@ -12,6 +12,10 @@ Item {
   readonly property string currentBgLink: home + "/.local/state/omarchy/current/background"
   readonly property string catalogScriptPath: decodeURIComponent(
     String(Qt.resolvedUrl("Catalog.sh")).replace(/^file:\/\//, ""))
+  readonly property string boundedReadScriptPath: decodeURIComponent(
+    String(Qt.resolvedUrl("BoundedRead.pl")).replace(/^file:\/\//, ""))
+  readonly property int configMaxBytes: 262144
+  readonly property int themeNameMaxBytes: 4096
   readonly property string repoUrl: "https://github.com/Somnius/Omarchy-Wallpaper-Rotate"
 
   // Config (persisted in config.json). `enabled` and `intervalMinutes` are
@@ -43,6 +47,11 @@ Item {
   property string lastError: ""
   property string lastAction: ""
 
+  property bool configReadPending: false
+  property bool themeReadPending: false
+  property bool themeInitialized: false
+  property string catalogReadDirectory: ""
+
   function currentConfig() {
     return {
       enabled: root.enabled,
@@ -67,13 +76,39 @@ Item {
     out.mode = ["sequential", "random", "shuffle"].indexOf(c.mode) >= 0 ? c.mode : "random"
     out.directory = typeof c.directory === "string" && c.directory.trim() !== ""
       ? c.directory.trim() : "~/Pictures/wallpapers"
-out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c.lastChangeEpoch < 1e15)
-    ? c.lastChangeEpoch : 0
+    out.lastChangeEpoch = (isFinite(c.lastChangeEpoch)
+        && c.lastChangeEpoch > 0 && c.lastChangeEpoch < 1e15)
+      ? c.lastChangeEpoch : 0
     out.position = Math.max(0, Math.round(Number(c.position)) || 0)
     out.cycle = Array.isArray(c.cycle) ? c.cycle.filter(function (p) { return typeof p === "string" }).slice(0, 50) : []
     out.cycleIndex = Math.max(0, Math.round(Number(c.cycleIndex)) || 0)
     out.cycleDir = typeof c.cycleDir === "string" ? c.cycleDir : ""
     return out
+  }
+
+  function validConfigShape(config) {
+    if (config === null || typeof config !== "object" || Array.isArray(config)) return false
+    if (config.enabled !== undefined && typeof config.enabled !== "boolean") return false
+    if (config.intervalMinutes !== undefined
+        && (typeof config.intervalMinutes !== "number" || !isFinite(config.intervalMinutes))) return false
+    if (config.mode !== undefined
+        && ["sequential", "random", "shuffle"].indexOf(config.mode) < 0) return false
+    if (config.directory !== undefined
+        && (typeof config.directory !== "string" || config.directory.trim() === "")) return false
+    if (config.lastChangeEpoch !== undefined
+        && (typeof config.lastChangeEpoch !== "number" || !isFinite(config.lastChangeEpoch))) return false
+    if (config.position !== undefined
+        && (typeof config.position !== "number" || !isFinite(config.position))) return false
+    if (config.cycleIndex !== undefined
+        && (typeof config.cycleIndex !== "number" || !isFinite(config.cycleIndex))) return false
+    if (config.cycleDir !== undefined && typeof config.cycleDir !== "string") return false
+    if (config.cycle !== undefined) {
+      if (!Array.isArray(config.cycle)) return false
+      for (var i = 0; i < config.cycle.length; i++) {
+        if (typeof config.cycle[i] !== "string") return false
+      }
+    }
+    return true
   }
 
   function expandPath(path) {
@@ -84,9 +119,18 @@ out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c
   }
 
   function applyConfig(text) {
-    var parsed = {}
-    try { parsed = text && text.trim() ? JSON.parse(text) : {} }
-    catch (error) { root.lastError = "Invalid config.json: " + error }
+    var parsed
+    try { parsed = JSON.parse(String(text)) }
+    catch (error) {
+      root.lastError = "Invalid config.json: " + error
+      return false
+    }
+    if (!root.validConfigShape(parsed)) {
+      root.lastError = "Invalid config.json: expected a configuration object"
+      return false
+    }
+    var firstLoad = !root.loaded
+    var previousDirectory = root.directory
     var config = normalize(parsed)
     // A brand-new config has lastChangeEpoch 0; start the clock now so the
     // first scheduled change waits one full interval instead of firing at once.
@@ -102,15 +146,124 @@ out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c
     root.cycleDir = config.cycleDir
     root.loaded = true
     root.nowEpoch = Date.now()
+    if (firstLoad || previousDirectory !== root.directory) {
+      root.catalogPaths = []
+      root.wallpaperList = []
+      Qt.callLater(function () { root.refreshCatalog(false) })
+    }
     Qt.callLater(root.reconcile)
+    return true
+  }
+
+  function clearConfigReadError() {
+    if (root.lastError.indexOf("Invalid config.json:") === 0
+        || root.lastError.indexOf("Could not read config.json:") === 0)
+      root.lastError = ""
+  }
+
+  function clearThemeReadError() {
+    if (root.lastError === "Invalid theme.name"
+        || root.lastError.indexOf("Could not read theme.name:") === 0)
+      root.lastError = ""
   }
 
   function saveConfig(patch) {
     var config = root.currentConfig()
     for (var key in patch) config[key] = patch[key]
     config = normalize(config)
+    // FileView retains its last written value when reads are disabled. Reset
+    // that cache so an externally replaced file can never suppress this write.
+    configFile.path = ""
+    configFile.path = root.configPath
     configFile.setText(JSON.stringify(config, null, 2) + "\n")
-    root.applyConfig(JSON.stringify(config))
+    if (root.applyConfig(JSON.stringify(config))) root.clearConfigReadError()
+  }
+
+  function requestConfigRead() {
+    if (configReadProc.running) {
+      root.configReadPending = true
+      return
+    }
+    root.configReadPending = false
+    configReadProc.running = true
+  }
+
+  function requestThemeRead() {
+    if (themeReadProc.running) {
+      root.themeReadPending = true
+      return
+    }
+    root.themeReadPending = false
+    themeReadProc.running = true
+  }
+
+  function readFailure(stderrText, fallback) {
+    var detail = String(stderrText || "").trim()
+    return detail || fallback
+  }
+
+  function onConfigReadExited(exitCode) {
+    var stale = root.configReadPending
+    root.configReadPending = false
+    if (stale) {
+      Qt.callLater(root.requestConfigRead)
+      return
+    }
+
+    var hadConfig = root.loaded
+    if (exitCode === 0) {
+      if (root.applyConfig(configReadOutput.text)) {
+        root.clearConfigReadError()
+      } else if (!root.loaded) {
+        var parseError = root.lastError
+        root.applyConfig("{}")
+        root.lastError = parseError
+      }
+    } else {
+      if (!root.loaded) root.applyConfig("{}")
+      if (exitCode !== 2 || hadConfig) {
+        root.lastError = "Could not read config.json: "
+          + readFailure(configReadError.text, "bounded read failed")
+      }
+    }
+
+  }
+
+  function applyThemeName(text) {
+    var raw = String(text || "")
+    if (!/^[^\r\n\u0085\u2028\u2029]+(?:\r?\n)?$/.test(raw)) {
+      root.lastError = "Invalid theme.name"
+      return false
+    }
+    var theme = raw.replace(/\r?\n$/, "").trim()
+    if (theme === "" || /[\u0000-\u001f\u007f]/.test(theme)) {
+      root.lastError = "Invalid theme.name"
+      return false
+    }
+    if (!root.themeInitialized) {
+      root.currentTheme = theme
+      root.themeInitialized = true
+    } else {
+      root.onThemeChanged(theme)
+    }
+    return true
+  }
+
+  function onThemeReadExited(exitCode) {
+    var stale = root.themeReadPending
+    root.themeReadPending = false
+    if (stale) {
+      Qt.callLater(root.requestThemeRead)
+      return
+    }
+
+    if (exitCode === 0) {
+      if (root.applyThemeName(themeReadOutput.text)) root.clearThemeReadError()
+    } else if (exitCode !== 2 || root.currentTheme !== "") {
+      root.lastError = "Could not read theme.name: "
+        + readFailure(themeReadError.text, "bounded read failed")
+    }
+
   }
 
   function setEnabled(value) {
@@ -135,7 +288,12 @@ out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c
       if (!cacheProc.running) cacheProc.running = true
       return
     }
-    if (!catalogProc.running) catalogProc.running = true
+    if (!catalogProc.running) {
+      root.catalogReadDirectory = root.directory
+      catalogProc.command = ["bash", root.catalogScriptPath,
+        expandPath(root.catalogReadDirectory)]
+      catalogProc.running = true
+    }
   }
 
   function wallpaperName(path) {
@@ -292,33 +450,65 @@ out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c
 
   FileView {
     id: configFile
-    path: root.configPath
+    path: ""
+    preload: false
     watchChanges: true
     printErrors: false
     atomicWrites: true
-    onLoaded: root.applyConfig(text())
-    onLoadFailed: root.applyConfig("")
-    onFileChanged: reload()
+    onFileChanged: root.requestConfigRead()
   }
 
   FileView {
     id: themeNameFile
-    path: root.themeNamePath
+    path: ""
+    preload: false
     watchChanges: true
     printErrors: false
-    onLoaded: root.onThemeChanged(text())
-    onLoadFailed: root.onThemeChanged("")
-    onFileChanged: reload()
+    onFileChanged: root.requestThemeRead()
   }
 
   Process {
     id: configDirProcess
     command: ["mkdir", "-p", root.configDir]
+    onExited: {
+      configFile.path = ""
+      configFile.path = root.configPath
+      root.requestConfigRead()
+    }
+  }
+
+  Process {
+    id: configReadProc
+    command: ["/usr/bin/perl", root.boundedReadScriptPath,
+      root.configPath, String(root.configMaxBytes)]
+    stdout: StdioCollector {
+      id: configReadOutput
+      waitForEnd: true
+    }
+    stderr: StdioCollector {
+      id: configReadError
+      waitForEnd: true
+    }
+    onExited: function(exitCode) { root.onConfigReadExited(exitCode) }
+  }
+
+  Process {
+    id: themeReadProc
+    command: ["/usr/bin/perl", root.boundedReadScriptPath,
+      root.themeNamePath, String(root.themeNameMaxBytes)]
+    stdout: StdioCollector {
+      id: themeReadOutput
+      waitForEnd: true
+    }
+    stderr: StdioCollector {
+      id: themeReadError
+      waitForEnd: true
+    }
+    onExited: function(exitCode) { root.onThemeReadExited(exitCode) }
   }
 
   Process {
     id: catalogProc
-    command: ["bash", root.catalogScriptPath, expandPath(root.directory)]
     stdout: StdioCollector {
       id: catalogOutput
       waitForEnd: true
@@ -328,6 +518,10 @@ out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c
       waitForEnd: true
     }
     onExited: function(exitCode) {
+      if (root.catalogReadDirectory !== root.directory) {
+        Qt.callLater(function () { root.refreshCatalog(false) })
+        return
+      }
       if (exitCode !== 0) {
         root.lastError = String(catalogStderr.text || "Could not list wallpapers").trim()
         return
@@ -354,7 +548,7 @@ out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c
   Process {
     id: cacheProc
     command: ["omarchy-theme-bg-cache"]
-    onExited: if (!catalogProc.running) catalogProc.running = true
+    onExited: root.refreshCatalog(false)
   }
 
   Process {
@@ -416,7 +610,8 @@ out.lastChangeEpoch = (isFinite(c.lastChangeEpoch) && c.lastChangeEpoch > 0 && c
   Component.onCompleted: {
     root.nowEpoch = Date.now()
     configDirProcess.running = true
+    themeNameFile.path = root.themeNamePath
+    root.requestThemeRead()
     root.updateCurrent()
-    root.refreshCatalog(false)
   }
 }
