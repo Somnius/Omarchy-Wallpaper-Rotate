@@ -10,6 +10,9 @@ A small framed thumbnail of the current wallpaper sits in the bar:
 - **Right-click** — switch to the next wallpaper immediately.
 - **Hover** — tooltip with the current wallpaper's name.
 
+<img width="361" height="488" alt="image" src="https://github.com/user-attachments/assets/03940652-d939-4ac9-ad2e-90bd63eaeb74" />
+
+
 ## Features
 
 - Scheduled rotation from any folder you point it at
