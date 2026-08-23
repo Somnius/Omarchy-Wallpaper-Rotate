@@ -12,6 +12,7 @@ Item {
   readonly property string currentBgLink: home + "/.local/state/omarchy/current/background"
   readonly property string catalogScriptPath: decodeURIComponent(
     String(Qt.resolvedUrl("Catalog.sh")).replace(/^file:\/\//, ""))
+  readonly property string repoUrl: "https://github.com/Somnius/Omarchy-Wallpaper-Rotate"
 
   // Config (persisted in config.json). `enabled` and `intervalMinutes` are
   // literal so the shipped defaults always apply for fresh installs and
@@ -384,6 +385,11 @@ Item {
     var dir = path.slice(0, Math.max(path.lastIndexOf("/"), 0))
     if (dir === "") dir = expandPath(root.directory)
     folderProc.command = ["xdg-open", dir]
+    folderProc.running = true
+  }
+
+  function openRepoPage() {
+    folderProc.command = ["xdg-open", root.repoUrl]
     folderProc.running = true
   }
 

@@ -212,6 +212,20 @@ Panel {
           font.pixelSize: Style.font.caption
           wrapMode: Text.WordWrap
         }
+
+        PanelSeparator { Layout.fillWidth: true; foreground: root.foreground }
+
+        Button {
+          Layout.fillWidth: true
+          text: "Source code · MIT license"
+          bordered: true
+          focusable: true
+          enabled: root.service !== null
+          foreground: root.foreground
+          accent: Color.accent
+          fontFamily: root.fontFamily
+          onClicked: if (root.service) root.service.openRepoPage()
+        }
       }
     }
   }

@@ -3,7 +3,7 @@
 An [Omarchy](https://omarchy.org/) shell plugin that rotates your wallpapers on
 a schedule — from **your own folders** (recursively), not just theme bundles.
 
-A small framed thumbnail of the current wallpaper sits in the bar:
+A small picture-frame icon sits in the bar:
 
 - **Left-click** — popup panel: current wallpaper name, open its folder,
   switch now, and schedule controls (interval down to **1 minute**, order).
