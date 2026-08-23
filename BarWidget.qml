@@ -37,7 +37,7 @@ BarWidget {
   Text {
     id: glyph
     anchors.centerIn: parent
-    text: "󰉊"
+    text: ""
     textFormat: Text.PlainText
     color: root.bar ? root.bar.barForeground : Color.foreground
     font.family: root.bar ? root.bar.fontFamily : Style.font.family

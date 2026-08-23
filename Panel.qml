@@ -70,7 +70,7 @@ Panel {
           fontFamily: root.fontFamily
           iconComponent: Component {
             Text {
-              text: "󰉊"
+              text: ""
               textFormat: Text.PlainText
               color: root.foreground
               font.family: root.fontFamily
