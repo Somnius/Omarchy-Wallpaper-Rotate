@@ -5,12 +5,12 @@ a schedule — from **your own folders** (recursively), not just theme bundles.
 
 A small picture-frame icon sits in the bar:
 
-- **Left-click** — popup panel: current wallpaper name, open its folder,
+- **Left-click** — popup panel: current wallpaper name, paste a source-folder path,
   switch now, and schedule controls (interval down to **1 minute**, order).
 - **Right-click** — switch to the next wallpaper immediately.
 - **Hover** — tooltip with the current wallpaper's name.
 
-<img width="361" height="488" alt="image" src="https://github.com/user-attachments/assets/03940652-d939-4ac9-ad2e-90bd63eaeb74" />
+<img width="355" height="611" alt="Wallpaper Rotate panel" src="preview.png" />
 
 
 ## Features
@@ -26,6 +26,7 @@ A small picture-frame icon sits in the bar:
 - Cheap while idle: a lightweight timer checks the schedule; processes only
   spawn when a change is due or the panel is open.
 - Thumbnails reuse Omarchy's built-in image-selector cache — no duplicate cache.
+- Config and theme metadata are read through bounded descriptors; oversized, malformed or non-regular replacements are rejected without replacing the last accepted state.
 
 ## Install
 
@@ -36,14 +37,13 @@ omarchy plugin add https://github.com/Somnius/Omarchy-Wallpaper-Rotate.git --ena
 Then place the widget in the bar:
 
 ```sh
-omarchy bar plugin add lef.wallpaper-rotate --section right
+omarchy bar put lef.wallpaper-rotate --section right
 ```
 
-### From a local clone (development)
+### From a local checkout (development)
 
 ```sh
-git clone https://github.com/Somnius/Omarchy-Wallpaper-Rotate.git
-ln -s "$PWD/Omarchy-Wallpaper-Rotate" ~/.config/omarchy/plugins/lef.wallpaper-rotate
+ln -s "$PWD" ~/.config/omarchy/plugins/lef.wallpaper-rotate
 omarchy-shell shell rescanPlugins
 ```
 
@@ -56,7 +56,7 @@ omarchy-shell shell rescanPlugins
 Validate at any time with:
 
 ```sh
-omarchy plugin validate ~/.config/omarchy/plugins/lef.wallpaper-rotate
+omarchy plugin validate "$PWD"
 ```
 
 ## Configuration
@@ -70,8 +70,8 @@ Config lives in `~/.config/omarchy/wallpaper-rotate/config.json` and hot-reloads
 | `mode` | string | `"random"` | `random`, `shuffle`, or `sequential` |
 | `directory` | string | `"~/Pictures/wallpapers"` | Root folder to scan (`~` allowed) |
 
-Interval and order can also be changed from the panel; everything else via the
-config file.
+Folder, interval and order can also be changed from the panel; everything else
+can be edited in the config file.
 
 ## IPC & keybindings
 
@@ -93,6 +93,10 @@ omarchy plugin remove lef.wallpaper-rotate
 ```
 
 (If installed via symlink, remove the symlink instead.)
+
+## External dependencies
+
+Perl (provided by Omarchy) is used for bounded metadata reads. Wallpaper discovery uses standard system tools already shipped with Omarchy.
 
 ## Credits
 

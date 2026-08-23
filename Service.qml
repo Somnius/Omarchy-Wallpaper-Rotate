@@ -16,6 +16,7 @@ Item {
     String(Qt.resolvedUrl("BoundedRead.pl")).replace(/^file:\/\//, ""))
   readonly property int configMaxBytes: 262144
   readonly property int themeNameMaxBytes: 4096
+  readonly property int directoryMaxChars: 4096
   readonly property string repoUrl: "https://github.com/Somnius/Omarchy-Wallpaper-Rotate"
 
   // Config (persisted in config.json). `enabled` and `intervalMinutes` are
@@ -44,6 +45,7 @@ Item {
   property bool busy: false
   property string pendingWallpaper: ""
   property var pendingPatch: null
+  property string pendingApplyDirectory: ""
   property string lastError: ""
   property string lastAction: ""
 
@@ -74,7 +76,7 @@ Item {
     if (!isFinite(minutes)) minutes = 5
     out.intervalMinutes = Math.max(1, Math.min(1440, minutes))
     out.mode = ["sequential", "random", "shuffle"].indexOf(c.mode) >= 0 ? c.mode : "random"
-    out.directory = typeof c.directory === "string" && c.directory.trim() !== ""
+    out.directory = root.validDirectory(c.directory)
       ? c.directory.trim() : "~/Pictures/wallpapers"
     out.lastChangeEpoch = (isFinite(c.lastChangeEpoch)
         && c.lastChangeEpoch > 0 && c.lastChangeEpoch < 1e15)
@@ -93,8 +95,7 @@ Item {
         && (typeof config.intervalMinutes !== "number" || !isFinite(config.intervalMinutes))) return false
     if (config.mode !== undefined
         && ["sequential", "random", "shuffle"].indexOf(config.mode) < 0) return false
-    if (config.directory !== undefined
-        && (typeof config.directory !== "string" || config.directory.trim() === "")) return false
+    if (config.directory !== undefined && !root.validDirectory(config.directory)) return false
     if (config.lastChangeEpoch !== undefined
         && (typeof config.lastChangeEpoch !== "number" || !isFinite(config.lastChangeEpoch))) return false
     if (config.position !== undefined
@@ -109,6 +110,15 @@ Item {
       }
     }
     return true
+  }
+
+  function validDirectory(value) {
+    if (typeof value !== "string") return false
+    if (value.length > root.directoryMaxChars) return false
+    if (/[\u0000-\u001f\u007f]/.test(value)) return false
+    var path = value.trim()
+    if (path === "") return false
+    return path === "~" || path.indexOf("~/") === 0 || path.indexOf("/") === 0
   }
 
   function expandPath(path) {
@@ -277,6 +287,31 @@ Item {
     root.lastAction = "Schedule saved"
   }
 
+  function setDirectory(value) {
+    if (!root.validDirectory(value)) {
+      root.lastError = "Folder must be ~, ~/…, or an absolute path (max "
+        + root.directoryMaxChars + " characters)"
+      return false
+    }
+    var path = value.trim()
+    if (path === root.directory) {
+      root.lastError = ""
+      root.lastAction = "Already using " + path
+      return true
+    }
+    root.lastError = ""
+    root.saveConfig({
+      directory: path,
+      lastChangeEpoch: Date.now(),
+      position: 0,
+      cycle: [],
+      cycleIndex: 0,
+      cycleDir: ""
+    })
+    root.lastAction = "Wallpaper folder updated"
+    return true
+  }
+
   function updateCurrent() {
     if (!currentProc.running) currentProc.running = true
   }
@@ -401,6 +436,7 @@ Item {
     if (!target) { root.lastError = "No wallpaper selected."; return }
     root.pendingWallpaper = target
     root.pendingPatch = patch || {}
+    root.pendingApplyDirectory = root.directory
     root.lastError = ""
     setProc.command = ["omarchy-theme-bg-set", target]
     root.busy = true
@@ -411,11 +447,14 @@ Item {
     root.busy = false
     var applied = root.pendingWallpaper
     var patch = root.pendingPatch || {}
+    var applyDirectory = root.pendingApplyDirectory
     root.pendingWallpaper = ""
     root.pendingPatch = null
+    root.pendingApplyDirectory = ""
     if (exitCode === 0) {
       root.currentWallpaper = applied
-      root.saveConfig(Object.assign({ lastChangeEpoch: Date.now() }, patch))
+      var statePatch = applyDirectory === root.directory ? patch : {}
+      root.saveConfig(Object.assign({ lastChangeEpoch: Date.now() }, statePatch))
       if (!currentProc.running) currentProc.running = true
       root.lastAction = "Wallpaper set to " + wallpaperName(applied)
       root.lastError = ""
@@ -452,6 +491,7 @@ Item {
     id: configFile
     path: ""
     preload: false
+    blockAllReads: true
     watchChanges: true
     printErrors: false
     atomicWrites: true
@@ -462,6 +502,7 @@ Item {
     id: themeNameFile
     path: ""
     preload: false
+    blockAllReads: true
     watchChanges: true
     printErrors: false
     onFileChanged: root.requestThemeRead()
@@ -570,16 +611,6 @@ Item {
       waitForEnd: true
     }
     onExited: function(exitCode) { root.onSetExited(exitCode) }
-  }
-
-  // Open the folder containing the current wallpaper. Lives here because the
-  // Ui Panel component scope refuses to instantiate Quickshell.Io Process.
-  function openCurrentFolder() {
-    var path = String(root.currentWallpaper || "")
-    var dir = path.slice(0, Math.max(path.lastIndexOf("/"), 0))
-    if (dir === "") dir = expandPath(root.directory)
-    folderProc.command = ["xdg-open", dir]
-    folderProc.running = true
   }
 
   function openRepoPage() {

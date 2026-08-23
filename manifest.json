@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "lef.wallpaper-rotate",
   "name": "Wallpaper Rotate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "lef",
   "license": "MIT",
-  "description": "Rotate wallpapers from your own folders on a schedule. Bar thumbnail, click panel with open-folder and next-now controls.",
+  "description": "Rotate wallpapers from your own folders on a schedule. Bar thumbnail, pasted folder path, and next-now controls.",
   "kinds": [
     "service",
     "bar-widget"

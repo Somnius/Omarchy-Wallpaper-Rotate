@@ -20,6 +20,7 @@ set -uo pipefail
 dir="${1:-$HOME/Pictures/wallpapers}"
 dir="${dir/#\~/$HOME}"
 [[ -d $dir ]] || exit 0
+dir=$(realpath -e -- "$dir" 2>/dev/null) || exit 0
 
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/image-selector"
 index_file="$cache_dir/index.tsv"
@@ -52,8 +53,12 @@ while IFS= read -r -d '' path; do
   # Reject any path that escapes the intended directory tree.
   # Resolve without following symlinks; skip anything outside $dir.
   real=$(realpath -m "$path" 2>/dev/null)
-  [[ "$real" == "$dir/"* ]] || continue
-  full=$(realpath -m "$path")
+  if [[ $dir == / ]]; then
+    [[ $real == /* ]] || continue
+  else
+    [[ $real == "$dir/"* ]] || continue
+  fi
+  full=$real
   thumb=$(thumbnail_for "$full")
   printf '%s\t%s\n' "$full" "${thumb:-$full}"
   found=$((found + 1))

@@ -28,6 +28,7 @@ Panel {
 
   function open() {
     if (service) {
+      if (!folderField.activeFocus) folderField.text = service.directory
       service.nowEpoch = Date.now()
       service.updateCurrent()
       service.refreshCatalog(true)
@@ -38,8 +39,9 @@ Panel {
   function close() { controller.hide() }
   function toggle() { opened ? close() : open() }
 
-  function openFolder() {
-    if (service) service.openCurrentFolder()
+  function applyFolder() {
+    if (!service) return
+    if (service.setDirectory(folderField.text)) folderField.text = service.directory
   }
 
   KeyboardPanel {
@@ -91,7 +93,7 @@ Panel {
         Text {
           Layout.fillWidth: true
           text: root.service && root.service.currentWallpaper !== ""
-            ? Qt.escape(root.service.wallpaperName(root.service.currentWallpaper)) : "None yet"
+            ? root.service.wallpaperName(root.service.currentWallpaper) : "None yet"
           textFormat: Text.PlainText
           color: root.foreground
           font.family: root.fontFamily
@@ -110,20 +112,41 @@ Panel {
           wrapMode: Text.WordWrap
         }
 
+        Text {
+          Layout.fillWidth: true
+          text: "Wallpaper folder"
+          textFormat: Text.PlainText
+          color: root.dim
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+        }
+
+        TextField {
+          id: folderField
+          Layout.fillWidth: true
+          text: root.service ? root.service.directory : "~/Pictures/wallpapers"
+          placeholderText: "~/Pictures/wallpapers"
+          maximumLength: root.service ? root.service.directoryMaxChars : 4096
+          foreground: root.foreground
+          accent: Color.accent
+          font.family: root.fontFamily
+          onAccepted: root.applyFolder()
+        }
+
         RowLayout {
           Layout.fillWidth: true
           spacing: Style.space(8)
 
           Button {
             Layout.fillWidth: true
-            text: "Open folder"
+            text: "Use folder"
             iconText: "󰉋"
             bordered: true
             focusable: true
             foreground: root.foreground
             accent: Color.accent
             fontFamily: root.fontFamily
-            onClicked: root.openFolder()
+            onClicked: root.applyFolder()
           }
 
           Button {

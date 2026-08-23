@@ -22,6 +22,16 @@ BarWidget {
   function close() { if (panelLoader.item) panelLoader.item.close() }
   function toggle() { if (panelLoader.item) panelLoader.item.toggle() }
 
+  function safeTooltip(value) {
+    var text = String(value || "").substring(0, 160)
+    return "<span>" + text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;") + "</span>"
+  }
+
   function injectPanel() {
     var target = panelLoader.item
     if (!target) return
@@ -64,7 +74,8 @@ BarWidget {
         root.toggle()
       }
     }
-    onEntered: if (root.bar) root.bar.showTooltip(root, Qt.escape(root.displayName || "Wallpaper Rotate"))
+    onEntered: if (root.bar)
+      root.bar.showTooltip(root, root.safeTooltip(root.displayName || "Wallpaper Rotate"))
     onExited: if (root.bar) root.bar.hideTooltip(root)
   }
 
