@@ -27,7 +27,7 @@ A small framed thumbnail of the current wallpaper sits in the bar:
 ## Install
 
 ```sh
-omarchy plugin add https://github.com/<your-user>/omarchy-wallpaper-rotate.git --enable
+omarchy plugin add https://github.com/Somnius/Omarchy-Wallpaper-Rotate.git --enable
 ```
 
 Then place the widget in the bar:
@@ -39,8 +39,8 @@ omarchy bar plugin add lef.wallpaper-rotate --section right
 ### From a local clone (development)
 
 ```sh
-git clone https://github.com/<your-user>/omarchy-wallpaper-rotate.git
-ln -s "$PWD/omarchy-wallpaper-rotate" ~/.config/omarchy/plugins/lef.wallpaper-rotate
+git clone https://github.com/Somnius/Omarchy-Wallpaper-Rotate.git
+ln -s "$PWD/Omarchy-Wallpaper-Rotate" ~/.config/omarchy/plugins/lef.wallpaper-rotate
 omarchy-shell shell rescanPlugins
 ```
 
