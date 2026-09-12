@@ -81,6 +81,19 @@ Panel {
           }
         }
 
+        Button {
+          Layout.fillWidth: true
+          text: "Show current image in Nautilus"
+          iconText: "󰉋"
+          bordered: true
+          focusable: true
+          enabled: root.service !== null
+          foreground: root.foreground
+          accent: Color.accent
+          fontFamily: root.fontFamily
+          onClicked: if (root.service) root.service.revealCurrent()
+        }
+
         PanelSeparator { Layout.fillWidth: true; foreground: root.foreground }
 
         PanelSectionHeader {

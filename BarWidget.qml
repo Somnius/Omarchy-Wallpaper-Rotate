@@ -99,6 +99,7 @@ BarWidget {
     function open(): void { root.open() }
     function close(): void { root.close() }
     function toggle(): void { root.toggle() }
+    function reveal(): void { if (root.ready) root.service.revealCurrent() }
     function next(): void { if (root.ready) root.service.applyNext() }
   }
 }

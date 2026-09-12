@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "lef.wallpaper-rotate",
   "name": "Wallpaper Rotate",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "lef",
   "license": "MIT",
-  "description": "Rotate wallpapers from your own folders on a schedule. Ctrl+left-click the bar icon to reveal the current image in Nautilus.",
+  "description": "Rotate wallpapers from your own folders on a schedule. Reveal the current image in Nautilus from the panel or with Ctrl+left-click.",
   "kinds": [
     "service",
     "bar-widget"
@@ -17,7 +17,7 @@
   },
   "barWidget": {
     "displayName": "Wallpaper Rotate",
-    "description": "Scheduled wallpaper rotation. Ctrl+left-click to reveal the current image in Nautilus.",
+    "description": "Scheduled wallpaper rotation with a panel button to show the current image in Nautilus.",
     "category": "Desktop",
     "allowMultiple": false,
     "defaultSection": "right"

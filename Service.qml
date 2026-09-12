@@ -14,6 +14,8 @@ Item {
     String(Qt.resolvedUrl("Catalog.sh")).replace(/^file:\/\//, ""))
   readonly property string boundedReadScriptPath: decodeURIComponent(
     String(Qt.resolvedUrl("BoundedRead.pl")).replace(/^file:\/\//, ""))
+  readonly property string revealScriptPath: decodeURIComponent(
+    String(Qt.resolvedUrl("Reveal.sh")).replace(/^file:\/\//, ""))
   readonly property int configMaxBytes: 262144
   readonly property int themeNameMaxBytes: 4096
   readonly property int directoryMaxChars: 4096
@@ -619,8 +621,7 @@ Item {
 
   Process {
     id: revealProc
-    command: ["bash", decodeURIComponent(String(Qt.resolvedUrl("Reveal.sh"))
-      .replace(/^file:\/\//, "")), root.currentBgLink]
+    command: ["bash", root.revealScriptPath, root.currentBgLink]
     stderr: StdioCollector { id: revealError; waitForEnd: true }
     onExited: function(exitCode) {
       if (exitCode !== 0)

@@ -6,8 +6,10 @@ a schedule — from **your own folders** (recursively), not just theme bundles.
 A small picture-frame icon sits in the bar:
 
 - **Left-click** — popup panel: current wallpaper name, paste a source-folder path,
-  switch now, and schedule controls (interval down to **1 minute**, order).
-- **Ctrl+left-click** — open Nautilus with the current wallpaper selected.
+  **Show current image in Nautilus**, switch now, and schedule controls (interval down to **1 minute**, order).
+- **Ctrl+left-click** — open a new Nautilus window with the current wallpaper selected.
+  If your bar does not forward this shortcut, use **Show current image in Nautilus**
+  in the popup panel.
 - **Right-click** — switch to the next wallpaper immediately.
 - **Hover** — tooltip with the current wallpaper's name and Ctrl+click shortcut.
 
@@ -77,6 +79,7 @@ can be edited in the config file.
 ## IPC & keybindings
 
 ```sh
+omarchy-shell lef.wallpaper-rotate reveal  # select current image in Nautilus
 omarchy-shell lef.wallpaper-rotate next    # switch now
 omarchy-shell lef.wallpaper-rotate toggle  # open/close the panel
 ```
@@ -97,7 +100,8 @@ omarchy plugin remove lef.wallpaper-rotate
 
 ## External dependencies
 
-Nautilus is required for Ctrl+left-click to reveal the current wallpaper.
+Nautilus is required for the panel button and Ctrl+left-click. Both open a new
+window with the current wallpaper selected, preserving existing windows.
 
 Perl (provided by Omarchy) is used for bounded metadata reads. Wallpaper discovery uses standard system tools already shipped with Omarchy.
 
