@@ -613,6 +613,25 @@ Item {
     onExited: function(exitCode) { root.onSetExited(exitCode) }
   }
 
+  function revealCurrent() {
+    if (!revealProc.running) revealProc.running = true
+  }
+
+  Process {
+    id: revealProc
+    command: ["bash", decodeURIComponent(String(Qt.resolvedUrl("Reveal.sh"))
+      .replace(/^file:\/\//, "")), root.currentBgLink]
+    stderr: StdioCollector { id: revealError; waitForEnd: true }
+    onExited: function(exitCode) {
+      if (exitCode !== 0)
+        root.lastError = String(revealError.text || "Could not reveal wallpaper in Nautilus").trim()
+      else {
+        root.lastError = ""
+        root.lastAction = "Current wallpaper revealed in Nautilus"
+      }
+    }
+  }
+
   function openRepoPage() {
     folderProc.command = ["xdg-open", root.repoUrl]
     folderProc.running = true

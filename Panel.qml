@@ -228,7 +228,7 @@ Panel {
 
         Text {
           Layout.fillWidth: true
-          text: "Right-click the bar icon to switch immediately. Minimum interval is 1 minute."
+          text: "Ctrl+left-click the bar icon to reveal the current image in Nautilus. Right-click to switch immediately. Minimum interval is 1 minute."
           textFormat: Text.PlainText
           color: root.dim
           font.family: root.fontFamily

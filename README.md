@@ -7,8 +7,9 @@ A small picture-frame icon sits in the bar:
 
 - **Left-click** — popup panel: current wallpaper name, paste a source-folder path,
   switch now, and schedule controls (interval down to **1 minute**, order).
+- **Ctrl+left-click** — open Nautilus with the current wallpaper selected.
 - **Right-click** — switch to the next wallpaper immediately.
-- **Hover** — tooltip with the current wallpaper's name.
+- **Hover** — tooltip with the current wallpaper's name and Ctrl+click shortcut.
 
 <img width="355" height="611" alt="Wallpaper Rotate panel" src="preview.png" />
 
@@ -95,6 +96,8 @@ omarchy plugin remove lef.wallpaper-rotate
 (If installed via symlink, remove the symlink instead.)
 
 ## External dependencies
+
+Nautilus is required for Ctrl+left-click to reveal the current wallpaper.
 
 Perl (provided by Omarchy) is used for bounded metadata reads. Wallpaper discovery uses standard system tools already shipped with Omarchy.
 

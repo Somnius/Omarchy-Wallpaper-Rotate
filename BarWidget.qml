@@ -70,12 +70,15 @@ BarWidget {
       if (mouse.button === Qt.RightButton) {
         // Switch immediately, no panel.
         root.service.applyNext()
+      } else if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier)) {
+        root.service.revealCurrent()
       } else {
         root.toggle()
       }
     }
     onEntered: if (root.bar)
-      root.bar.showTooltip(root, root.safeTooltip(root.displayName || "Wallpaper Rotate"))
+      root.bar.showTooltip(root, root.safeTooltip(root.displayName || "Wallpaper Rotate")
+        + "<br/>Ctrl+left-click: reveal in Nautilus")
     onExited: if (root.bar) root.bar.hideTooltip(root)
   }
 
