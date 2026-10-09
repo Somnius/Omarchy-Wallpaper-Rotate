@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Panel {
@@ -13,9 +14,9 @@ Panel {
   property var hostWidget: null
   property var service: null
   readonly property var barIdentity: hostWidget || root
-  readonly property color foreground: bar ? bar.foreground : Color.foreground
+  readonly property color foreground: bar ? bar.foreground : Commons.Color.foreground
   readonly property color dim: Qt.darker(foreground, 1.45)
-  readonly property color urgent: bar ? bar.urgent : Color.urgent
+  readonly property color urgent: bar ? bar.urgent : Commons.Color.urgent
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
 
   // Interval choices in minutes; 1 is the floor, per design.
@@ -89,7 +90,7 @@ Panel {
           focusable: true
           enabled: root.service !== null
           foreground: root.foreground
-          accent: Color.accent
+          accent: Commons.Color.accent
           fontFamily: root.fontFamily
           onClicked: if (root.service) root.service.revealCurrent()
         }
@@ -141,7 +142,7 @@ Panel {
           placeholderText: "~/Pictures/wallpapers"
           maximumLength: root.service ? root.service.directoryMaxChars : 4096
           foreground: root.foreground
-          accent: Color.accent
+          accent: Commons.Color.accent
           font.family: root.fontFamily
           onAccepted: root.applyFolder()
         }
@@ -157,7 +158,7 @@ Panel {
             bordered: true
             focusable: true
             foreground: root.foreground
-            accent: Color.accent
+            accent: Commons.Color.accent
             fontFamily: root.fontFamily
             onClicked: root.applyFolder()
           }
@@ -170,7 +171,7 @@ Panel {
             focusable: true
             enabled: root.service && !root.service.busy
             foreground: root.foreground
-            accent: Color.accent
+            accent: Commons.Color.accent
             fontFamily: root.fontFamily
             onClicked: if (root.service) root.service.applyNext()
           }
@@ -191,7 +192,7 @@ Panel {
           description: "Cycle wallpapers from your folder on an interval."
           checked: root.service ? root.service.enabled : false
           foreground: root.foreground
-          accent: Color.accent
+          accent: Commons.Color.accent
           fontFamily: root.fontFamily
           enabled: root.service !== null
           onClicked: if (root.service) root.service.setEnabled(!root.service.enabled)
@@ -258,7 +259,7 @@ Panel {
           focusable: true
           enabled: root.service !== null
           foreground: root.foreground
-          accent: Color.accent
+          accent: Commons.Color.accent
           fontFamily: root.fontFamily
           onClicked: if (root.service) root.service.openRepoPage()
         }
