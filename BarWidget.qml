@@ -14,6 +14,8 @@ BarWidget {
   readonly property string displayName: ready ? service.wallpaperName(service.currentWallpaper) : ""
 
   property bool popupOpen: false
+  // The bar only shows a tooltip for a target that reports itself hovered.
+  readonly property bool tooltipHovered: visible && mouseArea.containsMouse
 
   implicitWidth: glyph.implicitWidth + Style.space(12)
   implicitHeight: barSize
@@ -22,14 +24,9 @@ BarWidget {
   function close() { if (panelLoader.item) panelLoader.item.close() }
   function toggle() { if (panelLoader.item) panelLoader.item.toggle() }
 
+  // The bar renders tooltips as plain text, so no markup or escaping here.
   function safeTooltip(value) {
-    var text = String(value || "").substring(0, 160)
-    return "<span>" + text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
-      .replace(/'/g, "&#39;") + "</span>"
+    return String(value || "").substring(0, 160)
   }
 
   function injectPanel() {
@@ -60,6 +57,7 @@ BarWidget {
   }
 
   MouseArea {
+    id: mouseArea
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
@@ -78,7 +76,7 @@ BarWidget {
     }
     onEntered: if (root.bar)
       root.bar.showTooltip(root, root.safeTooltip(root.displayName || "Wallpaper Rotate")
-        + "<br/>Ctrl+left-click: reveal in Nautilus")
+        + "\nCtrl+left-click: reveal in Nautilus")
     onExited: if (root.bar) root.bar.hideTooltip(root)
   }
 
